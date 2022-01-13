@@ -117,7 +117,11 @@ ARG INSTALL_GNUPG=false
 
 RUN if [ ${INSTALL_GNUPG} = true ]; then \
       apt-get -yq install libgpgme-dev; \
-      pecl install gnupg; \
+      if [ $(php -r "echo PHP_MAJOR_VERSION;") = "8" ]; then \
+        pecl install gnupg-1.5.0RC2; \
+      else \
+        pecl install gnupg; \
+      fi; \
       docker-php-ext-enable gnupg; \
       php -m | grep -q 'gnupg'; \
     fi
@@ -217,7 +221,7 @@ RUN if [ ${INSTALL_XDEBUG} = true ]; then \
   # Install the xdebug extension
   # https://xdebug.org/docs/compat
   if [ $(php -r "echo PHP_MAJOR_VERSION;") = "8" ] || { [ $(php -r "echo PHP_MAJOR_VERSION;") = "7" ] && { [ $(php -r "echo PHP_MINOR_VERSION;") = "4" ] || [ $(php -r "echo PHP_MINOR_VERSION;") = "3" ] ;} ;}; then \
-    pecl install xdebug-3.1.2; \
+    pecl install xdebug-3.1.1; \
   else \
     if [ $(php -r "echo PHP_MAJOR_VERSION;") = "5" ]; then \
       pecl install xdebug-2.5.5; \
@@ -358,7 +362,7 @@ RUN if [ ${INSTALL_MONGO} = true ]; then \
       docker-php-ext-enable mongo; \
       php -m | grep -oiE '^mongo$'; \
     else \
-      if [ $(php -r "echo PHP_MAJOR_VERSION;") = "7" ] && { [ $(php -r "echo PHP_MINOR_VERSION;") = "0" ] || [ $(php -r "echo PHP_MINOR_VERSION;") = "1" ] ;}; then \
+      if [ $(php -r "echo PHP_VERSION_ID - PHP_RELEASE_VERSION;") = "70000" ]; then \
         pecl install mongodb-1.9.2; \
       else \
         pecl install mongodb; \
@@ -483,23 +487,6 @@ RUN if [ ${INSTALL_GEARMAN} = true ]; then \
     rm -r /tmp/pecl-gearman && \
     docker-php-ext-enable gearman \
 ;fi
-
-###########################################################################
-# xlswriter:
-###########################################################################
-
-ARG INSTALL_XLSWRITER=false
-RUN set -eux; \
-    if [ ${INSTALL_XLSWRITER} = true ]; then \
-      # Install Php xlswriter Extension \
-      if [ $(php -r "echo PHP_MAJOR_VERSION;") > "5" ]; then \
-          pecl install xlswriter  &&\
-          docker-php-ext-enable xlswriter &&\
-          php -m | grep -q 'xlswriter'; \
-      else \
-          echo "PHP Extension for xlswriter is not supported for PHP 5.0";\
-      fi \
-    ;fi
 
 ###########################################################################
 # pcntl
@@ -1103,7 +1090,7 @@ ARG INSTALL_XMLRPC=false
 RUN if [ ${INSTALL_XMLRPC} = true ]; then \
   apt-get -yq install libxml2-dev; \
   if [ $(php -r "echo PHP_MAJOR_VERSION;") = "8" ]; then \
-    pecl install xmlrpc-1.0.0RC3; \
+    pecl install xmlrpc-1.0.0RC2; \
     docker-php-ext-enable xmlrpc; \
   else \
     docker-php-ext-install xmlrpc; \
@@ -1162,7 +1149,7 @@ ARG NEW_RELIC_KEY=${NEW_RELIC_KEY}
 ARG NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME}
 
 RUN if [ ${NEW_RELIC} = true ]; then \
-  curl -L http://download.newrelic.com/php_agent/release/newrelic-php5-9.18.1.303-linux.tar.gz | tar -C /tmp -zx && \
+  curl -L http://download.newrelic.com/php_agent/archive/9.9.0.260/newrelic-php5-9.9.0.260-linux.tar.gz | tar -C /tmp -zx && \
   export NR_INSTALL_USE_CP_NOT_LN=1 && \
   export NR_INSTALL_SILENT=1 && \
   /tmp/newrelic-php5-*/newrelic-install install && \
